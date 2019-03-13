@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name		Google Search Date Range Shortcut
 // @namespace	https://joyfui.wo.tc/
-// @version		1
+// @version		2
 // @author		joyfuI
 // @description	구글 검색에서 기간 설정에 날짜 범위를 다양하게 추가합니다.
-// @homepage	https://github.com/joyfuI/google-search-date-range-shortcut
+// @homepageURL	https://github.com/joyfuI/google-search-date-range-shortcut
 // @downloadURL	https://raw.githubusercontent.com/joyfuI/google-search-date-range-shortcut/master/google-search-date-range-shortcut.user.js
 // @include		https://www.google.*/search*
 // @include		https://www.google.*.*/search*
