@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Google Search Date Range Shortcut
 // @namespace    https://joyfui.wo.tc/
-// @version      4
+// @version      5
 // @author       joyfuI
 // @description  구글 검색에서 기간 설정에 날짜 범위를 다양하게 추가합니다.
 // @homepageURL  https://github.com/joyfuI/google-search-date-range-shortcut
@@ -14,61 +14,60 @@
 
 (function () {
     "use strict";
-    // new Range(메뉴이름, 시작일, 종료일, 메뉴삽입위치) 꼴로 자유롭게 수정. 메뉴삽입위치에는 id를 적으면 되며 id 앞쪽에 삽입됨
+    // [메뉴이름, 기간] 꼴로 자유롭게 수정
     const list = [
-        new Range('지난 3일', dateStep(new Date(), '-3d'), new Date(), 'qdr_w'),
-        new Range('지난 2주', dateStep(new Date(), '-14d'), new Date(), 'qdr_m'),
-        new Range('지난 3개월', dateStep(new Date(), '-3m'), new Date(), 'qdr_y'),
-        new Range('지난 6개월', dateStep(new Date(), '-6m'), new Date(), 'qdr_y'),
-        new Range('지난 2년', dateStep(new Date(), '-2y'), new Date(), 'cdr_opt')
+        ['지난 1시간', 'h'],
+        ['지난 1일', 'd'],
+        ['지난 3일', 'd3'],
+        ['지난 1주', 'w'],
+        ['지난 2주', 'w2'],
+        ['지난 1개월', 'm'],
+        ['지난 3개월', 'm3'],
+        ['지난 6개월', 'm6'],
+        ['지난 1년', 'y'],
+        ['지난 2년', 'y2']
     ];
 
     function main() {
-        let menu = document.getElementById('qdr_').parentNode;
-        let baseNode = document.getElementById((document.getElementById('qdr_h').classList.contains('hdtbSel')) ? 'qdr_d' : 'qdr_h').cloneNode(true);
-        baseNode.removeAttribute('id');
-
-        for (let i of list) {
-            let newNode = baseNode.cloneNode(true);
-            let link = newNode.getElementsByTagName('a')[0];
-
-            link.textContent = i.name;
-            let tbs = encodeURIComponent(`cdr:1,cd_min:${dateToStr(i.min)},cd_max:${dateToStr(i.max)}`);
-            link.href = link.href.replace(/&tbs=.*&/, `&tbs=${tbs}&`);
-            menu.insertBefore(newNode, document.getElementById(i.position));
+        const menu = document.querySelector('#lb > div > g-menu');
+        let baseNode;
+        if (menu.childNodes[1].getElementsByTagName('a').length !== 0) {
+            baseNode = menu.childNodes[1].cloneNode(true);
+        } else {
+            baseNode = menu.childNodes[2].cloneNode(true);
         }
-    }
+        baseNode.classList.remove('nvELY');
 
-    function dateToStr(date) {
-        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-    }
-
-    // 기준일로부터 특정 간격 이후의 날짜를 반환. ex) dateStep(new Date(), '-1y-6m') - 오늘로부터 1년6개월 전
-    function dateStep(date, str) {
-        let cloneDate = new Date(date.getTime());
-
-        if (str.indexOf('d') != -1) {
-            cloneDate.setDate(cloneDate.getDate() + parseInt(str.match(/-?\d+d/)[0]));
+        // 기존 메뉴 제거
+        const count = menu.childElementCount - 2;
+        for (let i = 0; i < count; i++) {
+            menu.removeChild(menu.childNodes[1])
         }
-        if (str.indexOf('m') != -1) {
-            cloneDate.setMonth(cloneDate.getMonth() + parseInt(str.match(/-?\d+m/)[0]));
-        }
-        if (str.indexOf('y') != -1) {
-            cloneDate.setFullYear(cloneDate.getFullYear() + parseInt(str.match(/-?\d+y/)[0]));
-        }
-        return cloneDate;
-    }
 
-    function Range(name, min, max, position) {
-        this.name = name;
-        this.min = min;
-        this.max = max;
-        this.position = position;
+        // 새 메뉴 추가
+        const url = new URL(location.href);
+        for (const item of list) {
+            const newNode = baseNode.cloneNode(true);
+            if (url.searchParams.get('tbs') === `qdr:${item[1]}`) {
+                newNode.classList.add('nvELY');
+            }
+            const link = newNode.getElementsByTagName('a')[0];
+
+            link.textContent = item[0];
+            link.href = link.href.replace(/&tbs=.*&/, `&tbs=qdr:${item[1]}&`);
+            menu.insertBefore(newNode, menu.lastElementChild);
+        }
+
+        // 마우스오버 이벤트 추가
+        for (const node of menu.childNodes) {
+            node.addEventListener('mouseover', () => node.classList.add('gvybPb'));
+            node.addEventListener('mouseout', () => node.classList.remove('gvybPb'));
+        }
     }
 
     // 왜인진 모르겠으나 페이지 로딩 직후엔 해당 엘리먼트가 인식되지 않아서 타이머로 지속 체크
-    let timer = setInterval(function () {
-        if (document.getElementById('qdr_') != null) {
+    const timer = setInterval(() => {
+        if (document.getElementById('lb').childElementCount != 0) {
             clearInterval(timer);
             setTimeout(main, 0);
         }
